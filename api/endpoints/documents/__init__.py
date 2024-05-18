@@ -4,6 +4,7 @@ from fastapi import Depends, APIRouter, HTTPException, Response, status,  Upload
 from sqlalchemy import select
 from api.db_model import User, TransactionHistory, get_session, MLModel, Document, UsersToDocuments
 from api.endpoints.auth.FastAPI_users import current_active_user
+from api.endpoints.auth.manuspect_users import auth_manuspect_user
 from api.endpoints.predict.utils import validate_model_name
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.Asyncrq import asyncrq
@@ -40,10 +41,11 @@ router = APIRouter(
     status_code=status.HTTP_200_OK,
 )
 async def download_docs(
+    auth_token: str,
     filename: str,
-    user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_session),
 ):
+    user: User = await auth_manuspect_user(auth_token, session)
     # Проверка доступа к файлу
     result = await session.execute(
         select(Document)
@@ -64,10 +66,11 @@ async def download_docs(
     status_code=status.HTTP_200_OK
 )
 async def delete_document(
+    auth_token: str,
     document_id: str,
-    user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_session)
 ):
+    user: User = await auth_manuspect_user(auth_token, session)
     # Fetch the document to ensure it exists and is associated with the user
     result = await session.execute(
         select(Document)
@@ -99,9 +102,10 @@ async def delete_document(
     status_code=status.HTTP_200_OK,
 )
 async def get_docs_info_by_user(
-    user: User = Depends(current_active_user),
+    auth_token: str,
     session: AsyncSession = Depends(get_session),
 ):
+    user: User = await auth_manuspect_user(auth_token, session)
     # Создаем запрос с использованием JOIN между таблицами
     result = await session.execute(select(Document).join(UsersToDocuments, UsersToDocuments.document_id == Document.id).filter(UsersToDocuments.user_id == user.id, Document.is_deleted == False))
     # Получение документов пользователя
@@ -114,9 +118,11 @@ async def get_docs_info_by_user(
 )
 async def get_docs_info_by_user(
     doc_id: str | None,
-    user: User = Depends(current_active_user),
+    auth_token: str,
     session: AsyncSession = Depends(get_session),
 ):
+    user: User = await auth_manuspect_user(auth_token, session)
+    
     # Создаем запрос с использованием JOIN между таблицами
     result = await session.execute(
         select(Document)
@@ -132,20 +138,20 @@ async def get_docs_info_by_user(
     document = result.scalars().first()
     return document
 
-
-
-#TODO размер файла на самом деле не проверяется
 @router.post(
     "/", 
     status_code=status.HTTP_201_CREATED,
     response_description="The document has been successfully created. Please track the execution by job_id",
 )
 async def upload_document(
+    auth_token: str,
     target_class: str,
     document: UploadFile = File(description="Your document (max 10 MB)"),
-    user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_session),
 ):
+    user: User = await auth_manuspect_user(auth_token, session)
+
+
     doc_id = uuid.uuid4()
     await s3.upload_file(file=document.file, filename=str(doc_id))
     new_document = Document(id=doc_id, name=document.filename)

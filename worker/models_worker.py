@@ -9,7 +9,7 @@ from worker.models.text_classification_hackaton.utils import FileProcessor
 from api.s3 import s3
 import traceback
 
-model = Model()
+# model = Model()
 file_proc = FileProcessor()
 
 
@@ -39,7 +39,8 @@ async def analyze_document(
             
             data = await file_proc.process_file(doc_name, doc_id)
             
-            result = model.predict(data)
+            # result = model.predict(data)
+            result = "Test results"
             if not result:
                 raise Exception(f"Something is wrong. Try again later: {result}")
             

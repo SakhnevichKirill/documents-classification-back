@@ -2,7 +2,7 @@ import logging
 import uuid
 from typing import Any, Optional
 from fastapi_users import FastAPIUsers
-from fastapi_users.authentication import CookieTransport, AuthenticationBackend
+from fastapi_users.authentication import CookieTransport, AuthenticationBackend, BearerTransport
 from fastapi_users.authentication import RedisStrategy
 import redis.asyncio
 from fastapi import Depends, Request
@@ -14,10 +14,12 @@ from api.db_model import get_user_db
 
 redis = redis.asyncio.from_url("redis://redis:6379", decode_responses=True)
 
-cookie_transport = CookieTransport(
-    cookie_name="docs-class",
-    cookie_max_age=3600,
-)
+# cookie_transport = CookieTransport(
+#     cookie_name="docs-class",
+#     cookie_max_age=3600,
+# )
+
+bearer_transport = BearerTransport(tokenUrl="v1/auth/login")
 
 log = logging.getLogger()
 
@@ -48,8 +50,8 @@ async def get_user_manager(user_db: SQLAlchemyUserDatabase = Depends(get_user_db
 
 
 auth_backend = AuthenticationBackend(
-    name="cookie",
-    transport=cookie_transport,
+    name="jwt",
+    transport=bearer_transport,
     get_strategy=get_redis_strategy,
 )
 

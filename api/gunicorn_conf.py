@@ -8,5 +8,5 @@ timeout = 120
 threads = 4
 bind = "0.0.0.0:" + environ.get("PORT", "8000")
 max_requests = 5000
-certfile = "/ssl/karouniform.xyz.cer"
-keyfile = "/ssl/karouniform.xyz.key"
+# certfile = "/ssl/karouniform.xyz.cer"
+# keyfile = "/ssl/karouniform.xyz.key"

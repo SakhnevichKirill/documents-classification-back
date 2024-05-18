@@ -1,6 +1,6 @@
 import aioboto3
 
-ENDPOINT_URL = 'http://192.168.0.9:9000'
+ENDPOINT_URL = 'http://192.168.1.8:9000'
 ACCESS_KEY = 'abc123'
 SECRET_KEY = 'someSecretKey'
 BUCKET_NAME = 'test-bucket'
@@ -16,6 +16,13 @@ class S3Client:
         self.session = aioboto3.Session(region_name='public-read')
         self.client = None
         
+    async def create_bucket(self, bucket_name, region=None):
+        """Создает бакет в S3 с указанным именем и регионом"""
+        async with self.session.client("s3", endpoint_url=ENDPOINT_URL,aws_access_key_id=ACCESS_KEY, aws_secret_access_key=SECRET_KEY, region_name='public-read') as s3:
+            await s3.create_bucket(Bucket=bucket_name)
+            print(f'Бакет {bucket_name} успешно создан.')
+
+
     async def upload_file(self, file, filename: str):
         async with self.session.client("s3", endpoint_url=ENDPOINT_URL,aws_access_key_id=ACCESS_KEY, aws_secret_access_key=SECRET_KEY, region_name='public-read') as s3:
             await s3.upload_fileobj(file, self.bucket_name, filename)
